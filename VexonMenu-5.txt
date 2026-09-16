@@ -1,0 +1,775 @@
+-- Vexon Hub | Template UI
+-- Parent: CoreGui | Drag: header only
+-- Tabs: STEAL | MOVE | CHAR | SET
+getgenv()._VexonStealBarLoad = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/GnsXv/Test/refs/heads/main/VexonStealBar.lua"))()
+end
+
+local Players      = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS          = game:GetService("UserInputService")
+local RunService   = game:GetService("RunService")
+local CoreGui      = game:GetService("CoreGui")
+
+local player   = Players.LocalPlayer
+local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
+
+local W = isMobile and 300 or 380
+local H = isMobile and 460 or 560
+
+local C = {
+    Bg        = Color3.fromRGB(8, 4, 16),
+    BgHeader  = Color3.fromRGB(14, 6, 28),
+    Panel     = Color3.fromRGB(20, 10, 36),
+    Row       = Color3.fromRGB(16, 8, 30),
+    RowHov    = Color3.fromRGB(26, 12, 46),
+    AccentDk  = Color3.fromRGB(106, 13, 173),
+    Accent    = Color3.fromRGB(191, 95, 255),
+    AccentLt  = Color3.fromRGB(218, 160, 255),
+    AccentDim = Color3.fromRGB(75, 24, 120),
+    TabActive = Color3.fromRGB(106, 13, 173),
+    TabBg     = Color3.fromRGB(14, 6, 26),
+    White     = Color3.fromRGB(255, 255, 255),
+    Text      = Color3.fromRGB(232, 218, 248),
+    TextDim   = Color3.fromRGB(100, 70, 145),
+    Danger    = Color3.fromRGB(255, 80, 80),
+    ToggleOn  = Color3.fromRGB(191, 95, 255),
+    ToggleOff = Color3.fromRGB(30, 12, 55),
+}
+
+local function New(cls, props)
+    local o = Instance.new(cls)
+    for k, v in pairs(props or {}) do o[k] = v end
+    return o
+end
+
+local function Corner(r, p)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r)
+    c.Parent = p
+    return c
+end
+
+local function Stroke(col, th, p, tr)
+    local s = Instance.new("UIStroke")
+    s.Color = col
+    s.Thickness = th or 1.2
+    s.Transparency = tr or 0
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Parent = p
+    return s
+end
+
+local function Tw(obj, props, t, style)
+    TweenService:Create(obj,
+        TweenInfo.new(t or 0.2, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        props):Play()
+end
+
+-- ──────────────────────────────
+-- CLEANUP
+-- ──────────────────────────────
+pcall(function()
+    local old = CoreGui:FindFirstChild("VexonHub")
+    if old then
+        if getgenv and getgenv()._VexonFpsConn then
+            pcall(function() getgenv()._VexonFpsConn:Disconnect() end)
+            getgenv()._VexonFpsConn = nil
+        end
+        old:Destroy()
+    end
+end)
+
+local gui = New("ScreenGui", {
+    Name           = "VexonHub",
+    ResetOnSpawn   = false,
+    IgnoreGuiInset = true,
+    DisplayOrder   = 9999,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    Parent         = CoreGui,
+})
+
+-- ──────────────────────────────
+-- MAIN FRAME
+-- ──────────────────────────────
+local main = New("Frame", {
+    Name                   = "Main",
+    Size                   = UDim2.fromOffset(W, H),
+    Position               = UDim2.new(0.5, -W/2, 0.5, -H/2),
+    BackgroundColor3       = C.Bg,
+    BackgroundTransparency = 0,
+    BorderSizePixel        = 0,
+    ClipsDescendants       = true,
+    Parent                 = gui,
+})
+Corner(16, main)
+local mainStroke = Stroke(C.AccentDk, 1.6, main)
+
+local ms = New("UIScale", {Scale = 0.88, Parent = main})
+main.BackgroundTransparency = 1
+Tw(ms, {Scale = 1}, 0.32, Enum.EasingStyle.Back)
+Tw(main, {BackgroundTransparency = 0}, 0.22)
+
+task.spawn(function()
+    while mainStroke and mainStroke.Parent do
+        Tw(mainStroke, {Color = C.Accent}, 1.6, Enum.EasingStyle.Sine)
+        task.wait(1.6)
+        Tw(mainStroke, {Color = C.AccentDk}, 1.6, Enum.EasingStyle.Sine)
+        task.wait(1.6)
+    end
+end)
+
+-- ──────────────────────────────
+-- HEADER
+-- ──────────────────────────────
+local HEADER_H = isMobile and 48 or 56
+
+local header = New("Frame", {
+    Name             = "Header",
+    Size             = UDim2.new(1, 0, 0, HEADER_H),
+    BackgroundColor3 = C.BgHeader,
+    BorderSizePixel  = 0,
+    ZIndex           = 4,
+    Parent           = main,
+})
+Corner(16, header)
+
+New("UIGradient", {
+    Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0,    Color3.fromRGB(38, 12, 66)),
+        ColorSequenceKeypoint.new(0.55, C.BgHeader),
+        ColorSequenceKeypoint.new(1,    Color3.fromRGB(24, 8, 44)),
+    }),
+    Rotation = 90,
+    Parent   = header,
+})
+
+local hLine = New("Frame", {
+    Position               = UDim2.new(0.04, 0, 1, -1),
+    Size                   = UDim2.new(0.92, 0, 0, 1),
+    BackgroundColor3       = C.Accent,
+    BackgroundTransparency = 0.4,
+    BorderSizePixel        = 0,
+    ZIndex                 = 6,
+    Parent                 = header,
+})
+New("UIGradient", {
+    Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0,   1),
+        NumberSequenceKeypoint.new(0.2, 0),
+        NumberSequenceKeypoint.new(0.8, 0),
+        NumberSequenceKeypoint.new(1,   1),
+    }),
+    Parent = hLine,
+})
+
+local logoSz = isMobile and 28 or 34
+local logoBox = New("Frame", {
+    Position         = UDim2.fromOffset(12, (HEADER_H - logoSz) / 2),
+    Size             = UDim2.fromOffset(logoSz, logoSz),
+    BackgroundColor3 = C.AccentDk,
+    BorderSizePixel  = 0,
+    ZIndex           = 5,
+    Parent           = header,
+})
+Corner(8, logoBox)
+Stroke(C.Accent, 1.2, logoBox)
+New("TextLabel", {
+    Size                   = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Text                   = "V",
+    Font                   = Enum.Font.GothamBlack,
+    TextSize               = isMobile and 14 or 17,
+    TextColor3             = C.White,
+    ZIndex                 = 6,
+    Parent                 = logoBox,
+})
+
+local titleX = 12 + logoSz + 8
+
+New("TextLabel", {
+    Position               = UDim2.fromOffset(titleX, isMobile and 7 or 9),
+    Size                   = UDim2.fromOffset(140, isMobile and 18 or 22),
+    BackgroundTransparency = 1,
+    Text                   = "VEXON HUB",
+    Font                   = Enum.Font.GothamBlack,
+    TextSize               = isMobile and 13 or 16,
+    TextColor3             = C.Accent,
+    TextXAlignment         = Enum.TextXAlignment.Left,
+    ZIndex                 = 5,
+    Parent                 = header,
+})
+New("TextLabel", {
+    Position               = UDim2.fromOffset(titleX, isMobile and 26 or 32),
+    Size                   = UDim2.fromOffset(160, 13),
+    BackgroundTransparency = 1,
+    Text                   = "v1.0 | Template",
+    Font                   = Enum.Font.GothamBold,
+    TextSize               = 10,
+    TextColor3             = C.TextDim,
+    TextXAlignment         = Enum.TextXAlignment.Left,
+    ZIndex                 = 5,
+    Parent                 = header,
+})
+
+-- ──────────────────────────────
+-- BOTAO MINIMIZAR
+-- ──────────────────────────────
+local minBtn = New("TextButton", {
+    Position        = UDim2.new(1, -36, 0.5, -13),
+    Size            = UDim2.fromOffset(26, 26),
+    BackgroundColor3 = C.Panel,
+    AutoButtonColor  = false,
+    Text             = "-",
+    Font             = Enum.Font.GothamBlack,
+    TextSize         = 18,
+    TextColor3       = C.AccentLt,
+    ZIndex           = 8,
+    Parent           = header,
+})
+Corner(7, minBtn)
+Stroke(C.AccentDim, 1.0, minBtn)
+
+minBtn.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1
+    or i.UserInputType == Enum.UserInputType.Touch then
+        i:Destroy()
+    end
+end)
+
+-- ──────────────────────────────
+-- TAB BAR
+-- ──────────────────────────────
+local TAB_H    = isMobile and 34 or 38
+local tabNames = {"STEAL", "MOVE", "CHAR", "SET"}
+
+local tabBar = New("Frame", {
+    Position         = UDim2.fromOffset(0, HEADER_H),
+    Size             = UDim2.new(1, 0, 0, TAB_H),
+    BackgroundColor3 = Color3.fromRGB(10, 4, 20),
+    BorderSizePixel  = 0,
+    ZIndex           = 4,
+    Parent           = main,
+})
+
+New("Frame", {
+    Position               = UDim2.new(0.02, 0, 1, -1),
+    Size                   = UDim2.new(0.96, 0, 0, 1),
+    BackgroundColor3       = C.AccentDim,
+    BackgroundTransparency = 0.4,
+    BorderSizePixel        = 0,
+    ZIndex                 = 5,
+    Parent                 = tabBar,
+})
+
+local tabBtns   = {}
+local tabActive = {}
+
+for i, name in ipairs(tabNames) do
+    tabActive[name] = false
+
+    local btn = New("TextButton", {
+        Position               = UDim2.new((i-1) * 0.25, 1, 0, 3),
+        Size                   = UDim2.new(0.25, -2, 1, -6),
+        BackgroundColor3       = C.TabBg,
+        BackgroundTransparency = 0.2,
+        AutoButtonColor        = false,
+        Text                   = name,
+        Font                   = Enum.Font.GothamBlack,
+        TextSize               = isMobile and 10 or 12,
+        TextColor3             = C.TextDim,
+        ZIndex                 = 5,
+        Parent                 = tabBar,
+    })
+    Corner(8, btn)
+
+    local ind = New("Frame", {
+        Position               = UDim2.new(0.1, 0, 1, 1),
+        Size                   = UDim2.new(0.8, 0, 0, 2),
+        BackgroundColor3       = C.Accent,
+        BackgroundTransparency = 1,
+        BorderSizePixel        = 0,
+        ZIndex                 = 6,
+        Parent                 = btn,
+    })
+
+    tabBtns[name] = {btn = btn, ind = ind}
+
+    btn.MouseEnter:Connect(function()
+        if not tabActive[name] then
+            Tw(btn, {BackgroundColor3 = C.Panel, BackgroundTransparency = 0.05}, 0.14)
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not tabActive[name] then
+            Tw(btn, {BackgroundColor3 = C.TabBg, BackgroundTransparency = 0.2}, 0.14)
+        end
+    end)
+end
+
+-- ──────────────────────────────
+-- AREA DE CONTEUDO
+-- ──────────────────────────────
+local CONTENT_Y = HEADER_H + TAB_H
+local CONTENT_H = H - CONTENT_Y - 8
+
+local scroll = New("ScrollingFrame", {
+    Position               = UDim2.fromOffset(8, CONTENT_Y),
+    Size                   = UDim2.new(1, -16, 0, CONTENT_H),
+    BackgroundTransparency = 1,
+    BorderSizePixel        = 0,
+    ScrollBarThickness     = 2,
+    ScrollBarImageColor3   = C.AccentDim,
+    CanvasSize             = UDim2.new(),
+    AutomaticCanvasSize    = Enum.AutomaticSize.Y,
+    ZIndex                 = 3,
+    Parent                 = main,
+})
+New("UIListLayout", {
+    Padding   = UDim.new(0, 7),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Parent    = scroll,
+})
+New("UIPadding", {
+    PaddingTop    = UDim.new(0, 7),
+    PaddingBottom = UDim.new(0, 8),
+    Parent        = scroll,
+})
+
+-- ──────────────────────────────
+-- MINIMIZAR
+-- ──────────────────────────────
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        Tw(main, {Size = UDim2.fromOffset(W, HEADER_H)}, 0.26, Enum.EasingStyle.Quad)
+        minBtn.Text = "+"
+    else
+        Tw(main, {Size = UDim2.fromOffset(W, H)}, 0.30, Enum.EasingStyle.Back)
+        minBtn.Text = "-"
+    end
+end)
+
+-- ──────────────────────────────
+-- DRAG — so no header
+-- ──────────────────────────────
+do
+    local dragging, dragStart, startPos
+    header.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragStart = i.Position
+            startPos  = main.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if not dragging then return end
+        if i.UserInputType == Enum.UserInputType.MouseMovement
+        or i.UserInputType == Enum.UserInputType.Touch then
+            local d = i.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + d.X,
+                startPos.Y.Scale, startPos.Y.Offset + d.Y
+            )
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- ──────────────────────────────
+-- HELPERS STEAL STATE (sync com VexonStealBar via getgenv)
+-- ──────────────────────────────
+local function getStealCfg()
+    if getgenv and getgenv()._VexonSteal then
+        return getgenv()._VexonSteal
+    end
+    return nil
+end
+
+-- ──────────────────────────────
+-- BUILDERS
+-- ──────────────────────────────
+local rowOrder = 0
+
+local function clearScroll()
+    rowOrder = 0
+    scroll.CanvasPosition = Vector2.new(0, 0)
+    for _, c in ipairs(scroll:GetChildren()) do
+        if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then
+            c:Destroy()
+        end
+    end
+end
+
+local function sectionHeader(text)
+    rowOrder += 1
+    local wrap = New("Frame", {
+        Size                   = UDim2.new(1, -4, 0, isMobile and 20 or 24),
+        BackgroundTransparency = 1,
+        LayoutOrder            = rowOrder,
+        ZIndex                 = 3,
+        Parent                 = scroll,
+    })
+    New("Frame", {
+        Position               = UDim2.new(0, 0, 1, -1),
+        Size                   = UDim2.new(1, 0, 0, 1),
+        BackgroundColor3       = C.AccentDim,
+        BackgroundTransparency = 0.5,
+        BorderSizePixel        = 0,
+        Parent                 = wrap,
+    })
+    New("TextLabel", {
+        Size                   = UDim2.new(1, -8, 1, 0),
+        Position               = UDim2.fromOffset(8, 0),
+        BackgroundTransparency = 1,
+        Text                   = "-- " .. text:upper(),
+        Font                   = Enum.Font.GothamBlack,
+        TextSize               = isMobile and 9 or 10,
+        TextColor3             = C.Accent,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        ZIndex                 = 4,
+        Parent                 = wrap,
+    })
+end
+
+local function toggleRow(label, defaultOn, onToggle)
+    rowOrder += 1
+    local on   = (defaultOn == true)
+    local rowH = isMobile and 40 or 46
+    local delay = math.min(0.28 + rowOrder * 0.018, 0.32)
+
+    local row = New("Frame", {
+        Size                   = UDim2.new(1, -6, 0, rowH),
+        BackgroundColor3       = on and C.Panel or C.Row,
+        BackgroundTransparency = 0.2,
+        BorderSizePixel        = 0,
+        LayoutOrder            = rowOrder,
+        ZIndex                 = 3,
+        Parent                 = scroll,
+    })
+    Corner(10, row)
+    local rowStroke = Stroke(on and C.Accent or C.AccentDim, 1.0, row, on and 0.1 or 0.5)
+
+    New("TextLabel", {
+        Position               = UDim2.fromOffset(12, 0),
+        Size                   = UDim2.new(0.72, -12, 1, 0),
+        BackgroundTransparency = 1,
+        Text                   = label,
+        Font                   = Enum.Font.GothamBold,
+        TextSize               = isMobile and 11 or 13,
+        TextColor3             = C.Text,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        ZIndex                 = 4,
+        Parent                 = row,
+    })
+
+    local trackW    = isMobile and 34 or 40
+    local trackH    = isMobile and 16 or 18
+    local track = New("Frame", {
+        Position         = UDim2.new(1, -(trackW + 12), 0.5, -trackH/2),
+        Size             = UDim2.fromOffset(trackW, trackH),
+        BackgroundColor3 = on and C.ToggleOn or C.ToggleOff,
+        BorderSizePixel  = 0,
+        ZIndex           = 4,
+        Parent           = row,
+    })
+    Corner(trackH, track)
+
+    local knobSz    = trackH - 4
+    local knobOnPos  = UDim2.new(1, -(knobSz + 2), 0.5, -knobSz/2)
+    local knobOffPos = UDim2.new(0, 2, 0.5, -knobSz/2)
+    local knob = New("Frame", {
+        Position         = on and knobOnPos or knobOffPos,
+        Size             = UDim2.fromOffset(knobSz, knobSz),
+        BackgroundColor3 = C.White,
+        BorderSizePixel  = 0,
+        ZIndex           = 5,
+        Parent           = track,
+    })
+    Corner(knobSz, knob)
+
+    row.MouseEnter:Connect(function()
+        Tw(row, {BackgroundColor3 = C.RowHov, BackgroundTransparency = 0.05}, 0.14)
+    end)
+    row.MouseLeave:Connect(function()
+        Tw(row, {BackgroundColor3 = on and C.Panel or C.Row, BackgroundTransparency = 0.2}, 0.14)
+    end)
+
+    local clickBtn = New("TextButton", {
+        Size                   = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text                   = "",
+        ZIndex                 = 6,
+        Parent                 = row,
+    })
+    clickBtn.MouseButton1Click:Connect(function()
+        on = not on
+        Tw(track,     {BackgroundColor3 = on and C.ToggleOn or C.ToggleOff}, 0.18)
+        Tw(knob,      {Position = on and knobOnPos or knobOffPos}, 0.18)
+        Tw(row,       {BackgroundColor3 = on and C.Panel or C.Row}, 0.18)
+        Tw(rowStroke, {Color = on and C.Accent or C.AccentDim,
+                       Transparency = on and 0.1 or 0.5}, 0.18)
+        if onToggle then onToggle(on) end
+    end)
+
+    local rs = New("UIScale", {Scale = 0.92, Parent = row})
+    Tw(rs, {Scale = 1}, delay, Enum.EasingStyle.Back)
+end
+
+-- inputRow com callback opcional para sync em tempo real
+local function inputRow(label, default, onChanged)
+    rowOrder += 1
+    local rowH  = isMobile and 40 or 46
+    local delay = math.min(0.28 + rowOrder * 0.018, 0.32)
+
+    local row = New("Frame", {
+        Size                   = UDim2.new(1, -6, 0, rowH),
+        BackgroundColor3       = C.Row,
+        BackgroundTransparency = 0.15,
+        BorderSizePixel        = 0,
+        LayoutOrder            = rowOrder,
+        ZIndex                 = 3,
+        Parent                 = scroll,
+    })
+    Corner(10, row)
+    Stroke(C.AccentDim, 1.0, row, 0.4)
+
+    New("TextLabel", {
+        Position               = UDim2.fromOffset(12, 0),
+        Size                   = UDim2.new(0.65, -12, 1, 0),
+        BackgroundTransparency = 1,
+        Text                   = label,
+        Font                   = Enum.Font.GothamBold,
+        TextSize               = isMobile and 11 or 13,
+        TextColor3             = C.Text,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        ZIndex                 = 4,
+        Parent                 = row,
+    })
+
+    local boxW = isMobile and 52 or 60
+    local box = New("TextBox", {
+        Position               = UDim2.new(1, -(boxW + 10), 0.5, -12),
+        Size                   = UDim2.fromOffset(boxW, 24),
+        BackgroundColor3       = Color3.fromRGB(10, 4, 22),
+        Text                   = tostring(default or ""),
+        TextColor3             = C.Text,
+        Font                   = Enum.Font.GothamBold,
+        TextSize               = 11,
+        ClearTextOnFocus       = false,
+        TextXAlignment         = Enum.TextXAlignment.Center,
+        ZIndex                 = 5,
+        Parent                 = row,
+    })
+    Corner(5, box)
+    Stroke(C.AccentDim, 1.0, box, 0.3)
+
+    if onChanged then
+        box.FocusLost:Connect(function()
+            local val = tonumber(box.Text)
+            if val then
+                onChanged(val)
+            else
+                box.Text = tostring(default)
+            end
+        end)
+    end
+
+    local rs = New("UIScale", {Scale = 0.92, Parent = row})
+    Tw(rs, {Scale = 1}, delay, Enum.EasingStyle.Back)
+end
+
+local function actionRow(label, danger)
+    rowOrder += 1
+    local rowH      = isMobile and 40 or 46
+    local delay     = math.min(0.28 + rowOrder * 0.018, 0.32)
+    local bgCol     = danger and Color3.fromRGB(26, 6, 12) or C.Row
+    local strokeCol = danger and C.Danger or C.AccentDim
+    local textCol   = danger and C.Danger or C.AccentLt
+
+    local row = New("Frame", {
+        Size                   = UDim2.new(1, -6, 0, rowH),
+        BackgroundColor3       = bgCol,
+        BackgroundTransparency = 0.15,
+        BorderSizePixel        = 0,
+        LayoutOrder            = rowOrder,
+        ZIndex                 = 3,
+        Parent                 = scroll,
+    })
+    Corner(10, row)
+    Stroke(strokeCol, 1.0, row, 0.3)
+
+    New("TextButton", {
+        Size                   = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text                   = label,
+        Font                   = Enum.Font.GothamBlack,
+        TextSize               = isMobile and 11 or 13,
+        TextColor3             = textCol,
+        ZIndex                 = 4,
+        Parent                 = row,
+    })
+
+    local rs = New("UIScale", {Scale = 0.92, Parent = row})
+    Tw(rs, {Scale = 1}, delay, Enum.EasingStyle.Back)
+end
+
+-- ──────────────────────────────
+-- STEAL BAR: abre/fecha via toggle
+-- ──────────────────────────────
+local stealBarLoaded = false
+
+local function openStealBar()
+    -- se já carregou, só mostra
+    local existing = CoreGui:FindFirstChild("VexonStealHUD")
+    if existing then
+        existing.Enabled = true
+        return
+    end
+    -- primeira vez: executa o VexonStealBar
+    -- substitua o conteudo abaixo pelo seu loadstring/require do VexonStealBar
+    if getgenv and getgenv()._VexonStealBarLoad then
+        pcall(getgenv()._VexonStealBarLoad)
+    end
+end
+
+local function closeStealBar()
+    local existing = CoreGui:FindFirstChild("VexonStealHUD")
+    if existing then
+        existing.Enabled = false
+    end
+    -- desativa o steal também
+    local cfg = getStealCfg()
+    if cfg then cfg.AutoStealEnabled = false end
+end
+
+-- ──────────────────────────────
+-- CONTEUDO DAS TABS
+-- ──────────────────────────────
+local tabContent = {
+    STEAL = function()
+        local cfg = getStealCfg()  -- pode ser nil se StealBar não carregou ainda
+
+        sectionHeader("Auto Steal")
+
+        -- Toggle Auto Steal: abre/fecha o VexonStealBar E sincroniza o estado
+        toggleRow("Auto Steal", false, function(on)
+            if on then
+                openStealBar()
+                local c = getStealCfg()
+                if c then c.AutoStealEnabled = true end
+            else
+                closeStealBar()
+            end
+        end)
+
+        -- Steal Duration — sincroniza com StealBar em tempo real
+        inputRow("Steal Duration", cfg and cfg.StealDuration or 1.3, function(val)
+            local c = getStealCfg()
+            if c then c.StealDuration = val end
+        end)
+
+        -- Steal Radius — sincroniza com StealBar em tempo real
+        inputRow("Steal Radius", cfg and cfg.StealRadius or 62, function(val)
+            local c = getStealCfg()
+            if c then c.StealRadius = val end
+        end)
+
+        sectionHeader("Combat")
+        toggleRow("Bat Aimbot",     false)
+        toggleRow("Auto Swing",     false)
+        toggleRow("Bat Counter",    false)
+        toggleRow("Counter Medusa", false)
+        toggleRow("Anti Ragdoll",   false)
+        toggleRow("Spinbot",        false)
+    end,
+
+    MOVE = function()
+        sectionHeader("Auto Paths")
+        toggleRow("Auto Left",      false)
+        toggleRow("Auto Right",     false)
+
+        sectionHeader("Movement")
+        toggleRow("Infinity Jump",  false)
+        toggleRow("Ragdoll TP",     false)
+
+        sectionHeader("Speed")
+        inputRow("Normal Speed",    60)
+        inputRow("Carry Speed",     30)
+        inputRow("Low Speed Value", 10.1)
+    end,
+
+    CHAR = function()
+        sectionHeader("Character")
+        toggleRow("No Cam Collision",  true)
+        toggleRow("Stretch Rez",       false)
+        toggleRow("No Clip",           false)
+        toggleRow("Disable Animation", false)
+        toggleRow("Dark Mode",         false)
+        toggleRow("Optimizer",         true)
+
+        sectionHeader("Utilities")
+        actionRow("Insta Reset Now", true)
+    end,
+
+    SET = function()
+        sectionHeader("Keybinds")
+        inputRow("Speed Toggle",    "Q")
+        inputRow("Auto Left",       "Z")
+        inputRow("Auto Right",      "C")
+        inputRow("Lagger",          "P")
+        inputRow("Aimbot",          "F")
+        inputRow("Bat V2",          "T")
+        inputRow("Insta Reset",     "X")
+        inputRow("TP Down",         "G")
+        inputRow("Drop",            "H")
+        inputRow("Hide GUI",        "LCtrl")
+
+        sectionHeader("Interface")
+        inputRow("UI Scale",        1.0)
+        inputRow("Steal Bar Scale", 1.0)
+        toggleRow("Hide Side Buttons", false)
+        toggleRow("Lock UI",           false)
+        actionRow("Reset Side Buttons Position", false)
+    end,
+}
+
+-- ──────────────────────────────
+-- TROCA DE TABS
+-- ──────────────────────────────
+local activeTab = nil
+
+local function switchTab(name)
+    if activeTab == name then return end
+    activeTab = name
+
+    for n, t in pairs(tabBtns) do
+        local active = (n == name)
+        tabActive[n] = active
+        Tw(t.btn, {
+            BackgroundColor3       = active and C.TabActive or C.TabBg,
+            BackgroundTransparency = active and 0 or 0.2,
+        }, 0.2)
+        Tw(t.btn, {TextColor3 = active and C.White or C.TextDim}, 0.2)
+        Tw(t.ind, {BackgroundTransparency = active and 0.1 or 1.0}, 0.2)
+    end
+
+    clearScroll()
+    local build = tabContent[name]
+    if build then build() end
+end
+
+for name, t in pairs(tabBtns) do
+    t.btn.MouseButton1Click:Connect(function() switchTab(name) end)
+end
+
+switchTab("STEAL")
+
+print("[Vexon] carregado")
